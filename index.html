@@ -287,7 +287,7 @@
         </header>
 
         <div class="form-card" id="formCard">
-            <form action="https://formspree.io/f/YOUR_FORM_ID" method="POST" id="intakeForm">
+            <form id="intakeForm">
                 <!-- Contact Information -->
                 <div class="form-section">
                     <div class="section-title">Contact Information</div>
@@ -447,20 +447,46 @@
 
             // Get form data
             const formData = new FormData(form);
-            
-            // In production, this would submit to Formspree
-            // For now, simulate submission
-            setTimeout(() => {
-                const email = formData.get('email');
-                document.getElementById('confirmedEmail').textContent = email;
-                
-                formCard.style.display = 'none';
-                successMessage.classList.add('show');
+            const data = {
+                name: formData.get('name'),
+                email: formData.get('email'),
+                company: formData.get('company'),
+                projectType: formData.get('projectType'),
+                budget: formData.get('budget'),
+                timeline: formData.get('timeline'),
+                description: formData.get('description'),
+                features: formData.getAll('features').join(', ')
+            };
 
+            try {
+                // Submit to local API
+                const response = await fetch('/api/intake', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    const email = formData.get('email');
+                    document.getElementById('confirmedEmail').textContent = email;
+                    
+                    formCard.style.display = 'none';
+                    successMessage.classList.add('show');
+                } else {
+                    throw new Error(result.error || 'Submission failed');
+                }
+            } catch (error) {
+                console.error('Form submission error:', error);
+                alert('There was an error submitting your form. Please try again or email us directly.');
+            } finally {
                 // Re-enable button
                 submitButton.disabled = false;
                 submitButton.textContent = 'Submit Project Inquiry';
-            }, 1000);
+            }
         });
 
         // Add interactivity to radio options
